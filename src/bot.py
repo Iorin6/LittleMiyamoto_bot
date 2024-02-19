@@ -1,6 +1,12 @@
+import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import datetime
+
+# Configure logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Dictionary to store message limits for each user
 limits = {}
@@ -13,6 +19,10 @@ def set_limit(update: Update, context: CallbackContext):
         return
     username = args[0]
     limit = int(args[1])
+    if username in limits:
+        logger.info(f"Updating message limit for user {username} to {limit}")
+    else:
+        logger.info(f"Setting message limit for new user {username} to {limit}")
     limits[username] = limit
     update.message.reply_text(f"Message limit set to {limit} for user {username}")
 
@@ -22,6 +32,7 @@ def count_messages(update: Update, context: CallbackContext):
     if user in limits:
         limits[user] -= 1
         if limits[user] <= 0:
+            logger.info(f"User {user} has exceeded message limit")
             update.message.reply_text("You have reached the message limit. You have been muted until midnight.")
             return
     update.message.reply_text("Message received.")
